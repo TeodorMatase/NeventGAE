@@ -22,6 +22,7 @@ import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.cloud.datastore.LatLngValue;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.cloud.Date;
 import com.google.cloud.datastore.LatLng;
 import com.googlecode.objectify.*;
@@ -51,10 +52,16 @@ public class HelloAppEngine extends HttpServlet {
 
 	  	ObjectifyService.register(EventDataObj.class);
 	  	
-	  	EventDataObj incomingEvent = (EventDataObj)request.getAttribute("EventDataObj");
+	  	String incEve = request.getParameter("EventDataObj");
+	  	Gson gson = new Gson();
+	  	
+	  	//EventDataObj incomingEvent = (EventDataObj)request.getAttribute("EventDataObj");
+	  	EventDataObj incomingEvent = gson.fromJson(incEve, EventDataObj.class);
 	  	//MyLatLng tmp = new MyLatLng(30.0,30.0);
 	  	
-	  	//EventDataObj incomingEvent = new EventDataObj("time@email.com", null, "date", tmp, "20:00", "05/08/2018");
+	  	//EventDataObj incomingEvent2 = new EventDataObj("time@email.com", "getTest@", "getTest2", tmp, "20:00", "05/08/2018");
+	  	
+	  	//String toJsonTest = new Gson().toJson(incomingEvent2);
 	  	
 	  	masterList = ofy().load().type(EventDataObj.class).list();
 	  	
@@ -70,8 +77,14 @@ public class HelloAppEngine extends HttpServlet {
 	  		masterList.add(incomingEvent);
 	  		eventIndex = masterList.indexOf(incomingEvent);
 	  	}
-	  	boolean delete = (boolean) request.getAttribute("delete");
-	  	//boolean delete = false;
+	  	String delTemp = request.getParameter("delete");
+	  	boolean delete;
+	  	if(!delTemp.equals("true")) {
+	  		delete = false;
+	  	}
+	  	else {
+	  		delete = true;
+	  	}
 	  	if(delete) {
 	  		String user = request.getParameter("user");
 	  		if(user.equals(masterList.get(eventIndex).creatorEmail)) {
@@ -84,8 +97,15 @@ public class HelloAppEngine extends HttpServlet {
 	  		}
 	  		return;
 	  	}
-	  	boolean update_event = (boolean)request.getAttribute("update");
-	  	//boolean update_event = false;
+	  	boolean update_event;
+	  	String upTemp = request.getParameter("update");
+	  	if(!upTemp.equals("true")) {
+	  		update_event = false;
+	  	}
+	  	else {
+	  		update_event = true;
+	  	}
+
 	  	if(update_event) {
 	  		String user = request.getParameter("user");
 	  		if(user.equals(masterList.get(eventIndex).creatorEmail)) {
@@ -93,8 +113,14 @@ public class HelloAppEngine extends HttpServlet {
 	  			ofy().save().entities(masterList).now();
 	  		}
 	  	}
-	  	boolean weather = (boolean)request.getAttribute("weather");
-	  	//boolean weather = false;
+	  	boolean weather;
+	  	String weatherTemp = request.getParameter("weather");
+	  	if(!weatherTemp.equals("true")) {
+	  		weather = false;
+	  	}
+	  	else {
+	  		weather = true;
+	  	}
 	  	if(weather || masterList.get(eventIndex).datetime.equals("new")) {
 	  			try {
 					updateWeather(request, response);
@@ -173,7 +199,7 @@ public class HelloAppEngine extends HttpServlet {
 	  				masterList.get(eventIndex).lastWeatherUpdate = currentTime;
 	  				ofy().save().entities(masterList).now();
 	  				response.getWriter().println("After: Location: "+ masterList.get(eventIndex).EventLocation.latitude+","+masterList.get(eventIndex).EventLocation.longitude +" Weather Condition: " +masterList.get(eventIndex).weatherCondition + " Weather Temperature: "+masterList.get(eventIndex).weatherTemperature + " Weather POP: "+masterList.get(eventIndex).weatherPOP );
-	  				
+	  				response.getWriter().flush();
 	  			} catch (JSONException e) {
 	  				// TODO Auto-generated catch block
 	  				e.printStackTrace();
@@ -186,5 +212,7 @@ public class HelloAppEngine extends HttpServlet {
 	  	}
 		
 	}
+
+
 
 }
